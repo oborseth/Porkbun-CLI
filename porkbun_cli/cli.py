@@ -105,7 +105,7 @@ def ping():
 @app.command()
 def pricing(
     search: str = typer.Option(None, "--search", "-s", help="Filter by TLD"),
-    limit: int = typer.Option(50, "--limit", "-l", help="Maximum number of results to display")
+    limit: int = typer.Option(10000, "--limit", "-l", help="Maximum number of results to display")
 ):
     """Show pricing for all TLDs."""
     config_manager = ConfigManager()
@@ -141,11 +141,16 @@ def pricing(
         )
 
         for tld, prices in sorted_tlds:
+            # Pricing API returns dollar amounts as strings, not pennies
+            reg = prices.get("registration", "0")
+            ren = prices.get("renewal", "0")
+            trans = prices.get("transfer", "0")
+
             table.add_row(
                 f".{tld}",
-                format_price(prices.get("registration", 0)),
-                format_price(prices.get("renewal", 0)),
-                format_price(prices.get("transfer", 0))
+                f"${reg}" if reg else "N/A",
+                f"${ren}" if ren else "N/A",
+                f"${trans}" if trans else "N/A"
             )
 
         console.print(table)
