@@ -79,18 +79,34 @@ class PorkbunClient:
 
         try:
             response = self.session.request(method, url, json=payload, timeout=30)
-            response.raise_for_status()
-            data = response.json()
 
+            # Try to get error details from response body before raising
+            try:
+                data = response.json()
+            except ValueError:
+                # If response isn't JSON, raise the HTTP error
+                response.raise_for_status()
+                raise PorkbunAPIError("Invalid JSON response from API")
+
+            # Check HTTP status
+            if not response.ok:
+                error_msg = data.get("message", str(response.reason))
+                raise PorkbunAPIError(f"HTTP {response.status_code}: {error_msg}")
+
+            # Check API status field
             if data.get("status") == "ERROR":
                 raise PorkbunAPIError(data.get("message", "Unknown error"))
 
             return data
 
         except RequestException as e:
+            # This catches connection errors, timeouts, etc.
             raise PorkbunAPIError(f"Request failed: {str(e)}")
-        except ValueError as e:
-            raise PorkbunAPIError(f"Invalid JSON response: {str(e)}")
+        except PorkbunAPIError:
+            # Re-raise our own errors
+            raise
+        except Exception as e:
+            raise PorkbunAPIError(f"Unexpected error: {str(e)}")
 
     # System Operations
     def ping(self) -> dict[str, Any]:
