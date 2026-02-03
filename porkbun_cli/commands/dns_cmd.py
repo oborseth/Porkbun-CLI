@@ -11,6 +11,8 @@ from porkbun_cli.utils import (
     create_table,
     format_ttl,
     confirm,
+    prompt_string,
+    prompt_choice,
     console
 )
 
@@ -98,8 +100,8 @@ Notes: {record.get('notes', 'N/A')}"""
 @app.command("create")
 def create_record(
     domain: str,
-    record_type: str = typer.Option(..., "--type", "-t", help="Record type (A, AAAA, CNAME, MX, etc.)"),
-    content: str = typer.Option(..., "--content", "-c", help="Record content"),
+    record_type: Optional[str] = typer.Option(None, "--type", "-t", help="Record type (A, AAAA, CNAME, MX, etc.)"),
+    content: Optional[str] = typer.Option(None, "--content", "-c", help="Record content"),
     name: Optional[str] = typer.Option(None, "--name", "-n", help="Subdomain name (leave empty for root)"),
     ttl: int = typer.Option(600, "--ttl", help="Time to live in seconds"),
     priority: Optional[int] = typer.Option(None, "--priority", "-p", help="Priority (for MX/SRV records)"),
@@ -110,9 +112,22 @@ def create_record(
 
     # Validate record type
     valid_types = ["A", "AAAA", "CNAME", "MX", "TXT", "NS", "SRV", "TLSA", "CAA", "ALIAS", "HTTPS", "SVCB", "SSHFP"]
+
+    # Prompt for record type if not provided
+    if record_type is None:
+        record_type = prompt_choice(
+            "Record type",
+            choices=valid_types,
+            default="A"
+        )
+
     if record_type.upper() not in valid_types:
         print_error(f"Invalid record type. Valid types: {', '.join(valid_types)}")
         raise typer.Exit(1)
+
+    # Prompt for content if not provided
+    if content is None:
+        content = prompt_string(f"Record content (e.g., IP address for A record)")
 
     try:
         result = client.create_dns_record(
@@ -139,8 +154,8 @@ def create_record(
 def edit_record(
     domain: str,
     record_id: str,
-    record_type: str = typer.Option(..., "--type", "-t", help="Record type"),
-    content: str = typer.Option(..., "--content", "-c", help="Record content"),
+    record_type: Optional[str] = typer.Option(None, "--type", "-t", help="Record type"),
+    content: Optional[str] = typer.Option(None, "--content", "-c", help="Record content"),
     name: Optional[str] = typer.Option(None, "--name", "-n", help="Subdomain name"),
     ttl: int = typer.Option(600, "--ttl", help="Time to live in seconds"),
     priority: Optional[int] = typer.Option(None, "--priority", "-p", help="Priority"),
@@ -148,6 +163,15 @@ def edit_record(
 ):
     """Edit an existing DNS record by ID."""
     client = get_client()
+
+    # Prompt for record type if not provided
+    valid_types = ["A", "AAAA", "CNAME", "MX", "TXT", "NS", "SRV", "TLSA", "CAA", "ALIAS", "HTTPS", "SVCB", "SSHFP"]
+    if record_type is None:
+        record_type = prompt_choice("Record type", choices=valid_types, default="A")
+
+    # Prompt for content if not provided
+    if content is None:
+        content = prompt_string("Record content")
 
     try:
         result = client.edit_dns_record(
@@ -172,7 +196,7 @@ def edit_record(
 def delete_record(
     domain: str,
     record_id: str,
-    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation")
+    yes: bool = typer.Option(True, "--yes/--no-yes", "-y", help="Skip confirmation (default: yes)")
 ):
     """Delete a DNS record by ID."""
     client = get_client()
@@ -235,7 +259,7 @@ def delete_by_type(
     domain: str,
     record_type: str = typer.Argument(..., help="Record type"),
     subdomain: str = typer.Argument("", help="Subdomain name"),
-    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation")
+    yes: bool = typer.Option(True, "--yes/--no-yes", "-y", help="Skip confirmation (default: yes)")
 ):
     """Delete all DNS records of a specific type and subdomain."""
     client = get_client()

@@ -9,6 +9,8 @@ from porkbun_cli.utils import (
     print_info,
     create_table,
     confirm,
+    prompt_string,
+    prompt_int,
     console
 )
 
@@ -64,13 +66,26 @@ def list_dnssec(domain: str):
 @app.command("create")
 def create_dnssec(
     domain: str,
-    key_tag: int = typer.Option(..., "--key-tag", "-k", help="Key tag"),
-    algorithm: int = typer.Option(..., "--algorithm", "-a", help="Algorithm number"),
-    digest_type: int = typer.Option(..., "--digest-type", "-d", help="Digest type"),
-    digest: str = typer.Option(..., "--digest", help="Digest value")
+    key_tag: int = typer.Option(None, "--key-tag", "-k", help="Key tag"),
+    algorithm: int = typer.Option(None, "--algorithm", "-a", help="Algorithm number"),
+    digest_type: int = typer.Option(None, "--digest-type", "-d", help="Digest type"),
+    digest: str = typer.Option(None, "--digest", help="Digest value")
 ):
     """Create a DNSSEC record."""
     client = get_client()
+
+    # Prompt for missing required parameters
+    if key_tag is None:
+        key_tag = prompt_int("Key tag")
+
+    if algorithm is None:
+        algorithm = prompt_int("Algorithm number (e.g., 8 for RSA/SHA-256)")
+
+    if digest_type is None:
+        digest_type = prompt_int("Digest type (e.g., 2 for SHA-256)")
+
+    if digest is None:
+        digest = prompt_string("Digest value")
 
     try:
         result = client.create_dnssec_record(
@@ -93,7 +108,7 @@ def create_dnssec(
 def delete_dnssec(
     domain: str,
     key_tag: int = typer.Argument(..., help="Key tag of the DNSSEC record to delete"),
-    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation")
+    yes: bool = typer.Option(True, "--yes/--no-yes", "-y", help="Skip confirmation (default: yes)")
 ):
     """Delete a DNSSEC record by key tag."""
     client = get_client()

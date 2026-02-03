@@ -12,6 +12,8 @@ from porkbun_cli.utils import (
     create_table,
     format_price,
     confirm,
+    prompt_string,
+    prompt_int,
     console
 )
 
@@ -93,11 +95,16 @@ def check_domain(domain: str):
 @app.command("create")
 def create_domain(
     domain: str,
-    cost: int = typer.Option(..., help="Expected cost in pennies (for confirmation)"),
-    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation")
+    cost: Optional[int] = typer.Option(None, help="Expected cost in pennies (for confirmation)"),
+    yes: bool = typer.Option(True, "--yes/--no-yes", "-y", help="Skip confirmation (default: yes)")
 ):
     """Register a new domain."""
     client = get_client()
+
+    # Prompt for cost if not provided
+    if cost is None:
+        print_info("Tip: Check cost with 'porkbun domain check <domain>' first")
+        cost = prompt_int("Expected cost in pennies (e.g., 899 for $8.99)")
 
     if not yes:
         if not confirm(

@@ -10,6 +10,8 @@ from porkbun_cli.utils import (
     print_info,
     create_table,
     confirm,
+    prompt_string,
+    prompt_choice,
     console
 )
 
@@ -66,7 +68,7 @@ def list_forwards(domain: str):
 @app.command("add")
 def add_forward(
     domain: str,
-    location: str = typer.Option(..., "--location", "-l", help="Target URL"),
+    location: Optional[str] = typer.Option(None, "--location", "-l", help="Target URL"),
     subdomain: Optional[str] = typer.Option(None, "--subdomain", "-s", help="Subdomain (leave empty for root)"),
     forward_type: str = typer.Option("temporary", "--type", "-t", help="Forward type (temporary or permanent)"),
     include_path: bool = typer.Option(False, "--include-path", help="Include request path in forward"),
@@ -74,6 +76,10 @@ def add_forward(
 ):
     """Add a URL forward for a domain."""
     client = get_client()
+
+    # Prompt for location if not provided
+    if location is None:
+        location = prompt_string("Target URL (e.g., https://example.com)")
 
     if forward_type not in ["temporary", "permanent"]:
         print_error("Forward type must be 'temporary' or 'permanent'")
@@ -103,7 +109,7 @@ def add_forward(
 def delete_forward(
     domain: str,
     record_id: str,
-    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation")
+    yes: bool = typer.Option(True, "--yes/--no-yes", "-y", help="Skip confirmation (default: yes)")
 ):
     """Delete a URL forward."""
     client = get_client()

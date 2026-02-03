@@ -84,6 +84,50 @@ def confirm(message: str, default: bool = False) -> bool:
     return Confirm.ask(message, default=default)
 
 
+def prompt_string(message: str, default: str = None, password: bool = False) -> str:
+    """Prompt for a string value.
+
+    Args:
+        message: Prompt message
+        default: Default value
+        password: Whether to hide input (for passwords)
+
+    Returns:
+        User input string
+    """
+    from rich.prompt import Prompt
+    return Prompt.ask(message, default=default, password=password)
+
+
+def prompt_int(message: str, default: int = None) -> int:
+    """Prompt for an integer value.
+
+    Args:
+        message: Prompt message
+        default: Default value
+
+    Returns:
+        User input integer
+    """
+    from rich.prompt import IntPrompt
+    return IntPrompt.ask(message, default=default)
+
+
+def prompt_choice(message: str, choices: list[str], default: str = None) -> str:
+    """Prompt for a choice from a list.
+
+    Args:
+        message: Prompt message
+        choices: List of valid choices
+        default: Default choice
+
+    Returns:
+        Selected choice
+    """
+    from rich.prompt import Prompt
+    return Prompt.ask(message, choices=choices, default=default)
+
+
 def format_price(pennies: int) -> str:
     """Format price from pennies to dollars.
 

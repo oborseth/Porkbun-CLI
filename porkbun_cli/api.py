@@ -74,7 +74,7 @@ class PorkbunClient:
 
         if require_auth and payload is None:
             payload = self._build_payload()
-        elif require_auth and payload:
+        elif require_auth and payload is not None:
             payload = self._build_payload(**payload)
 
         try:

@@ -9,6 +9,7 @@ from porkbun_cli.utils import (
     print_info,
     create_table,
     confirm,
+    prompt_string,
     console
 )
 
@@ -62,10 +63,16 @@ def list_glue(domain: str):
 def create_glue(
     domain: str,
     subdomain: str = typer.Argument(..., help="Subdomain for glue record"),
-    ips: list[str] = typer.Option(..., "--ip", help="IP address (can be specified multiple times)")
+    ips: list[str] = typer.Option(None, "--ip", help="IP address (can be specified multiple times)")
 ):
     """Create a glue record."""
     client = get_client()
+
+    # Prompt for IPs if none provided
+    if not ips:
+        print_info("Enter IP addresses (comma-separated)")
+        ips_input = prompt_string("IP addresses")
+        ips = [ip.strip() for ip in ips_input.split(",")]
 
     if not ips:
         print_error("At least one IP address is required")
@@ -85,10 +92,16 @@ def create_glue(
 def update_glue(
     domain: str,
     subdomain: str = typer.Argument(..., help="Subdomain for glue record"),
-    ips: list[str] = typer.Option(..., "--ip", help="IP address (can be specified multiple times)")
+    ips: list[str] = typer.Option(None, "--ip", help="IP address (can be specified multiple times)")
 ):
     """Update a glue record."""
     client = get_client()
+
+    # Prompt for IPs if none provided
+    if not ips:
+        print_info("Enter IP addresses (comma-separated)")
+        ips_input = prompt_string("IP addresses")
+        ips = [ip.strip() for ip in ips_input.split(",")]
 
     if not ips:
         print_error("At least one IP address is required")
@@ -108,7 +121,7 @@ def update_glue(
 def delete_glue(
     domain: str,
     subdomain: str = typer.Argument(..., help="Subdomain for glue record"),
-    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation")
+    yes: bool = typer.Option(True, "--yes/--no-yes", "-y", help="Skip confirmation (default: yes)")
 ):
     """Delete a glue record."""
     client = get_client()
